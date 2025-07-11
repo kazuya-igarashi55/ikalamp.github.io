@@ -1,1 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>10秒ごとに音声再生</title>
+    <!-- Tailwind CDN for quick styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 gap-4">
+    <h1 class="text-2xl font-bold">10秒ごとに音声再生デモ</h1>
 
+    <!-- ファイル選択 -->
+    <input
+      id="audioFile"
+      type="file"
+      accept="audio/*"
+      class="file:mr-4 file:px-4 file:py-2 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+    />
+
+    <!-- コントロールボタン -->
+    <div class="flex gap-2">
+      <button
+        id="startBtn"
+        class="px-5 py-2 bg-blue-600 text-white rounded-2xl shadow hover:bg-blue-700 transition"
+      >再生開始</button>
+      <button
+        id="stopBtn"
+        class="px-5 py-2 bg-gray-300 text-gray-800 rounded-2xl shadow hover:bg-gray-400 transition"
+      >停止</button>
+    </div>
+
+    <!-- ステータスメッセージ -->
+    <p id="status" class="text-gray-700"></p>
+    <p id="countdown" class="text-lg text-blue-600 font-mono"></p>
+
+    <!-- オーディオ要素 (非表示) -->
+    <audio id="player"></audio>
+
+    <script>
+      let intervalId = null;
+      let countdownId = null;
+      let remaining = 10;
+      const player = document.getElementById("player");
+      const audioFileInput = document.getElementById("audioFile");
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const status = document.getElementById("status");
+      const countdown = document.getElementById("countdown");
+
+      audioFileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          player.src = URL.createObjectURL(file);
+          status.textContent = "ファイル読み込み完了: " + file.name;
+        }
+      });
+
+      function playSound() {
+        player.currentTime = 0;
+        player.play();
+        remaining = 10;
+        countdown.textContent = `次の再生まで: ${remaining} 秒`;
+      }
+
+      function startCountdown() {
+        countdown.textContent = `次の再生まで: ${remaining} 秒`;
+        countdownId = setInterval(() => {
+          remaining--;
+          countdown.textContent = `次の再生まで: ${remaining} 秒`;
+        }, 1000);
+      }
+
+      startBtn.addEventListener("click", () => {
+        if (!player.src) {
+          status.textContent = "先に音声ファイルを選択してください。";
+          return;
+        }
+        if (intervalId) return;
+
+        playSound();
+        startCountdown();
+        intervalId = setInterval(() => {
+          playSound();
+          clearInterval(countdownId);
+          startCountdown();
+        }, 10_000);
+
+        status.textContent = "再生中… (10秒間隔)";
+      });
+
+      stopBtn.addEventListener("click", () => {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+        if (countdownId) {
+          clearInterval(countdownId);
+          countdownId = null;
+        }
+        player.pause();
+        status.textContent = "停止しました。";
+        countdown.textContent = "";
+      });
+    </script>
+  </body>
+</html>
